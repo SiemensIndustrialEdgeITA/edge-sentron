@@ -49,7 +49,7 @@ List of **PAC2200** meter data:
 
 ### Download the App
 
-The **sentron-edge** app can be downloaded in .app format from this repository [sentron-edge_x.x.x.app](https://drive.google.com/drive/folders/150FJPrJYlrYPZrD2MwN5WK9AnhwfODJG)
+The **sentron-edge** app can be downloaded in .app format from this repository [sentron-edge_x.x.x.app](https://drive.google.com/drive/folders/1coGurU8VEtxEa04gEA1YxiTsP1GL1LKD)
 
 ### Prerequisites
 
