@@ -40,36 +40,55 @@ def callbackFunction(response):
     # Callback comes here from Runtime
     # do JSON loading in a try block to avoid invalid JSON processing.
 
-    print(sys.stderr, response)
+    print("------------ Callback READ ------------")
+    print(response)
 
-    '''
+    # Split response
+    s = response.split("\n",1)
+    print(s)
+    
+    # Conncetion settings response from HMI
+    # {"log":"\u003c_io.TextIOWrapper name='\u003cstderr\u003e' mode='w' encoding='utf-8'\u003e {\"ClientCookie\":\"myRequest1\",\"Message\":\"NotifyReadTag\",\"Params\":{\"Tags\":[{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Unit_Id\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:29.7227210\",\"Value\":\"1\"},{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Port_Number\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:27.5093550\",\"Value\":\"502\"},{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Ip_Address\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:24.0047780\",\"Value\":\"192.168.100.10\"},{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Enable\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:32.9775190\",\"Value\":\"TRUE\"}]}}\n","stream":"stdout","time":"2022-02-16T18:05:08.125940659Z"}
+
     try:
-        j = json.loads(response)
-        msg = j.get("Message") 
+        # Parse response
+        y = json.loads(s[0])
+        msg = y['Message']
+        print(msg)
+        
         if msg == "NotifyWriteTag":
-            printOnSuccess(j)
+            print(msg)
+            printOnSuccess(y)
         elif msg == "NotifyReadTag":
-            printOnSuccess(j)
+            
+            print("---- RESPONSE ----")
+            # Debug
+            print(y['Params']['Tags'][0]['Value'])
+            print(y['Params']['Tags'][1]['Value'])
+            print(y['Params']['Tags'][2]['Value'])
+            print(y['Params']['Tags'][3]['Value'])
+            
+            print(msg)
+            printOnSuccess(y)
             # Get tags value
-            params = j.get("Params")
-            tags = params.get("Tags")
-            enable = tags[0].get("Value")
+            enable = y['Params']['Tags'][3]['Value']
             print(enable)
             global modbus_enable
             if(enable == "TRUE"):   
                 modbus_enable = "TRUE"
                 # Get connection parameters tags
                 global plc_address, modbus_port , unit_id
-                plc_address = tags[1].get("Value")
-                modbus_port = tags[2].get("Value")
-                unit_id = int(tags[3].get("Value"))
+                plc_address = y['Params']['Tags'][2]['Value']
+                modbus_port = y['Params']['Tags'][1]['Value']
+                unit_id = int(y['Params']['Tags'][0]['Value'])
             if(enable == 'FALSE'):
                 modbus_enable = "FALSE"
         elif msg == "ErrorWriteTag":
-            printOnError(j)
+            printOnError(y)
+
+            
     except json.decoder.JSONDecodeError:
         print("response is not a valid JSON")
-        '''
 
 # Init measures
 def init():
@@ -307,7 +326,13 @@ except  Exception as e:
 '''    
 
 length = 1024
+
+# Unix path
 file_name = '/temp/HmiRuntime'
+
+
+# Windows path
+# file_name = '\\\\.\\pipe\\HmiRuntime'
 
 # AF_UNIX: process on the same machine
 # SOCK_STREAM: stream oriented socket
@@ -319,7 +344,7 @@ print(sys.stderr, 'Connecting to %s' % file_name)
 # Socket connection 
 try:
     pipe_socket.connect(file_name)
-    print(sys.stderr, 'Connect to %s' % file_name)
+    print(sys.stderr, 'Connected to %s' % file_name)
 except socket.error as msg:
     print(sys.stderr, msg)
 
