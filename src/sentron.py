@@ -99,10 +99,10 @@ def init():
     global modbus_enable
     global pipe_socket
 
-    plc_address = "192.168.100.9"
+    plc_address = "192.168.100.1"
     modbus_port = "502"
     unit_id = 1
-    modbus_enable = "TRUE"
+    modbus_enable = "FALSE"
 
     ConnectionState = 0
     ErrorState = 0
@@ -268,8 +268,11 @@ def setValues(values):
     # Total reactive energy exported - current period (varh)
     Q_Total_Exp = values[53]
     
+    # Last polling timestamp
+    Polling_timestamp = datetime.now()
+    
     # Prepare query for WinCC
-    writeTagCommand = '{"Message":"WriteTag","Params":{"Tags":[{"Name":"ConnectionState","Value":"' + str(ConnectionState) + '"},{"Name":"ErrorState","Value":"' + str(ErrorState) + '"},{"Name":"L1_N","Value":"' + str(L1_N) + '"},{"Name":"L2_N","Value":"' + str(L2_N) + '"},{"Name":"L3_N","Value":"' + str(L3_N) + '"}, {"Name":"L1_L2","Value":"' + str(L1_L2) + '"},{"Name":"L2_L3","Value":"' + str(L2_L3) + '"},{"Name":"L3_L1","Value":"' + str(L3_L1) + '"},{"Name":"I1","Value":"' + str(I1) + '"},{"Name":"I2","Value":"' + str(I2) + '"},{"Name":"I3","Value":"' + str(I3) + '"},{"Name":"S_L1","Value":"' + str(S_L1) + '"},{"Name":"S_L2","Value":"' + str(S_L2) + '"},{"Name":"S_L3","Value":"' + str(S_L3) + '"},{"Name":"P_L1","Value":"' + str(P_L1) + '"},{"Name":"P_L2","Value":"' + str(P_L2) + '"},{"Name":"P_L3","Value":"' + str(P_L3) + '"},{"Name":"Q_L1","Value":"' + str(Q_L1) + '"},{"Name":"Q_L2","Value":"' + str(Q_L2) + '"},{"Name":"Q_L3","Value":"' + str(Q_L3) + '"},{"Name":"Frequency","Value":"' + str(Frequency) + '"},{"Name":"L_N_Avg","Value":"' + str(L_N_Avg) + '"},{"Name":"L_L_Avg","Value":"' + str(L_L_Avg) + '"},{"Name":"I_Avg","Value":"' + str(I_Avg) + '"},{"Name":"S_Total","Value":"' + str(S_Total) + '"},{"Name":"P_Total","Value":"' + str(P_Total) + '"},{"Name":"Q_Total","Value":"' + str(Q_Total) + '"},{"Name":"PF_Total","Value":"' + str(PF_Total) + '"},{"Name":"I_N","Value":"' + str(I_N) + '"},{"Name":"P_Total_Imp","Value":"' + str(P_Total_Imp) + '"},{"Name":"Q_Total_Imp","Value":"' + str(Q_Total_Imp) + '"},{"Name":"P_Total_Exp","Value":"' + str(P_Total_Exp) + '"},{"Name":"Q_Total_Exp","Value":"' + str(Q_Total_Exp) + '"}]},"ClientCookie":"CookieReadTags123"}\n'
+    writeTagCommand = '{"Message":"WriteTag","Params":{"Tags":[{"Name":"ConnectionState","Value":"' + str(ConnectionState) + '"},{"Name":"Polling_Timestamp","Value":"' + str(Polling_timestamp) + '"},{"Name":"ErrorState","Value":"' + str(ErrorState) + '"},{"Name":"L1_N","Value":"' + str(L1_N) + '"},{"Name":"L2_N","Value":"' + str(L2_N) + '"},{"Name":"L3_N","Value":"' + str(L3_N) + '"}, {"Name":"L1_L2","Value":"' + str(L1_L2) + '"},{"Name":"L2_L3","Value":"' + str(L2_L3) + '"},{"Name":"L3_L1","Value":"' + str(L3_L1) + '"},{"Name":"I1","Value":"' + str(I1) + '"},{"Name":"I2","Value":"' + str(I2) + '"},{"Name":"I3","Value":"' + str(I3) + '"},{"Name":"S_L1","Value":"' + str(S_L1) + '"},{"Name":"S_L2","Value":"' + str(S_L2) + '"},{"Name":"S_L3","Value":"' + str(S_L3) + '"},{"Name":"P_L1","Value":"' + str(P_L1) + '"},{"Name":"P_L2","Value":"' + str(P_L2) + '"},{"Name":"P_L3","Value":"' + str(P_L3) + '"},{"Name":"Q_L1","Value":"' + str(Q_L1) + '"},{"Name":"Q_L2","Value":"' + str(Q_L2) + '"},{"Name":"Q_L3","Value":"' + str(Q_L3) + '"},{"Name":"Frequency","Value":"' + str(Frequency) + '"},{"Name":"L_N_Avg","Value":"' + str(L_N_Avg) + '"},{"Name":"L_L_Avg","Value":"' + str(L_L_Avg) + '"},{"Name":"I_Avg","Value":"' + str(I_Avg) + '"},{"Name":"S_Total","Value":"' + str(S_Total) + '"},{"Name":"P_Total","Value":"' + str(P_Total) + '"},{"Name":"Q_Total","Value":"' + str(Q_Total) + '"},{"Name":"PF_L1","Value":"' + str(PF_L1) + '"},{"Name":"PF_L2","Value":"' + str(PF_L2) + '"},{"Name":"PF_L3","Value":"' + str(PF_L3) + '"},{"Name":"PF_Total","Value":"' + str(PF_Total) + '"},{"Name":"I_N","Value":"' + str(I_N) + '"},{"Name":"P_Total_Imp","Value":"' + str(P_Total_Imp) + '"},{"Name":"Q_Total_Imp","Value":"' + str(Q_Total_Imp) + '"},{"Name":"P_Total_Exp","Value":"' + str(P_Total_Exp) + '"},{"Name":"Q_Total_Exp","Value":"' + str(Q_Total_Exp) + '"}]},"ClientCookie":"CookieReadTags123"}\n'
     print(writeTagCommand)
     
     # Send data to WinCC
@@ -349,6 +352,11 @@ except socket.error as msg:
     print(sys.stderr, msg)
 
 
+# Read tag from WinCC
+readTagCommand = '{"Message":"ReadTag","Params":{"Tags":["Enable","Ip_Address","Port_Number","Unit_Id"]},"ClientCookie":"myRequest1"}\n'
+pipe_socket.sendall(readTagCommand.encode())
+
+
 #Read register - Set interval from HMI
 while True:
 
@@ -376,13 +384,6 @@ while True:
           print('no data')
       
       
-      
-   
-      # Read tag from WinCC
-      readTagCommand = '{"Message":"ReadTag","Params":{"Tags":["Enable","Ip_Address","Port_Number","Unit_Id"]},"ClientCookie":"myRequest1"}\n'
-      pipe_socket.sendall(readTagCommand.encode())
-      
-
       print(modbus_enable)
       print(plc_address)
       print(modbus_port)
@@ -458,7 +459,7 @@ while True:
                time.sleep(polling_time)
      
      
-            # Else if connection is close store zeros in to dabatabase
+            # Else if connection is close store zeros into dabatabase
          elif(connection_state == 0):
       
                  values = np.zeros(100)
@@ -502,8 +503,3 @@ while True:
              print("Execution time: %s seconds " % (endtime - startime))
              print("Error code: ", error_code, " description: ", error_code_desc)
              time.sleep(polling_time)
-
-
-
-
-
