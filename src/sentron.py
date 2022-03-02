@@ -353,14 +353,13 @@ except socket.error as msg:
 
 
 # Read tag from WinCC
-readTagCommand = '{"Message":"ReadTag","Params":{"Tags":["Enable","Ip_Address","Port_Number","Unit_Id"]},"ClientCookie":"myRequest1"}\n'
+readTagCommand = '{"Message":"ReadTag","Params":{"Tags":["Enable","IPv4","Port_Number","Unit_Id"]},"ClientCookie":"myRequest1"}\n'
 pipe_socket.sendall(readTagCommand.encode())
 
 
 #Read register - Set interval from HMI
 while True:
 
-   
       # Start reading time
       startime = time.time()
 
