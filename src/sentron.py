@@ -41,56 +41,92 @@ def callbackFunction(response):
     # do JSON loading in a try block to avoid invalid JSON processing.
 
     print("------------ Callback READ ------------")
-    print(response)
+    # NotifySubscribeTagValue IPv4 Good 192.168.100.5\n  ----- Response example
+    print("Response " + response)
 
-    # Split response
-    s = response.split("\n",1)
-    print(s)
-    
-    # Conncetion settings response from HMI
-    # {"log":"\u003c_io.TextIOWrapper name='\u003cstderr\u003e' mode='w' encoding='utf-8'\u003e {\"ClientCookie\":\"myRequest1\",\"Message\":\"NotifyReadTag\",\"Params\":{\"Tags\":[{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Unit_Id\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:29.7227210\",\"Value\":\"1\"},{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Port_Number\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:27.5093550\",\"Value\":\"502\"},{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Ip_Address\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:24.0047780\",\"Value\":\"192.168.100.10\"},{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Enable\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:32.9775190\",\"Value\":\"TRUE\"}]}}\n","stream":"stdout","time":"2022-02-16T18:05:08.125940659Z"}
+    global plc_address, modbus_port , unit_id, device_type, modbus_enable
 
-    try:
-        # Parse response
-        y = json.loads(s[0])
-        msg = y['Message']
-        print(msg)
+    # If find "NotifyReadTag" in response is the first WinCC variables read
+    if (response.find("NotifyReadTag") != -1):
+          # Split response
+          print("--- NotifyReadTag ---")
+          s = response.split("\n",1)
+          try:
+              # Parse response
+              y = json.loads(s[0])
+              msg = y['Message']
+              # print(msg)
+              # Debug
+              # print(y['Params']['Tags'][0]['Value'])
+              # print(y['Params']['Tags'][1]['Value'])
+              # print(y['Params']['Tags'][2]['Value'])
+              # print(y['Params']['Tags'][3]['Value'])
+              # print(y['Params']['Tags'][4]['Value'])
+
+              
+              modbus_enable = y['Params']['Tags'][2]['Value']
+              plc_address = y['Params']['Tags'][3]['Value']
+              modbus_port = y['Params']['Tags'][4]['Value']
+              unit_id = int(y['Params']['Tags'][0]['Value'])
+              device_type = int(y['Params']['Tags'][1]['Value'])
+
+          except json.decoder.JSONDecodeError:
+              print("response is not a valid JSON")
         
-        if msg == "NotifyWriteTag":
-            print(msg)
-            printOnSuccess(y)
-        elif msg == "NotifyReadTag":
-            
-            print("---- RESPONSE ----")
-            # Debug
-            print(y['Params']['Tags'][0]['Value'])
-            print(y['Params']['Tags'][1]['Value'])
-            print(y['Params']['Tags'][2]['Value'])
-            print(y['Params']['Tags'][3]['Value'])
-            print(y['Params']['Tags'][4]['Value'])
-            
-            print(msg)
-            printOnSuccess(y)
-            # Get tags value
-            enable = y['Params']['Tags'][2]['Value']
-            print(enable)
-            global modbus_enable
-            if(enable == "TRUE"):   
-                modbus_enable = "TRUE"
-                # Get connection parameters tags
-                global plc_address, modbus_port , unit_id, device_type
-                plc_address = y['Params']['Tags'][3]['Value']
-                modbus_port = y['Params']['Tags'][4]['Value']
-                unit_id = int(y['Params']['Tags'][0]['Value'])
-                device_type = int(y['Params']['Tags'][1]['Value'])
-            if(enable == 'FALSE'):
-                modbus_enable = "FALSE"
-        elif msg == "ErrorWriteTag":
-            printOnError(y)
+        
 
+    elif (response.find("NotifySubscribeTagValue") != -1):
+            # Split response
+            msg = response.split()
+            # print("Split response 0: " + msg[0])
+            # print("Split response 1: " + msg[1])
+            # print("Split response 2: " + msg[2])
+            # print("Split response 3: " + msg[3])
             
-    except json.decoder.JSONDecodeError:
-        print("response is not a valid JSON")
+            # Conncetion settings response from HMI
+            # {"log":"\u003c_io.TextIOWrapper name='\u003cstderr\u003e' mode='w' encoding='utf-8'\u003e {\"ClientCookie\":\"myRequest1\",\"Message\":\"NotifyReadTag\",\"Params\":{\"Tags\":[{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Unit_Id\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:29.7227210\",\"Value\":\"1\"},{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Port_Number\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:27.5093550\",\"Value\":\"502\"},{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Ip_Address\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:24.0047780\",\"Value\":\"192.168.100.10\"},{\"ErrorCode\":0,\"ErrorDescription\":\"\",\"Name\":\"Enable\",\"Quality\":\"Good\",\"QualityCode\":192,\"TimeStamp\":\"2022-02-16 17:43:32.9775190\",\"Value\":\"TRUE\"}]}}\n","stream":"stdout","time":"2022-02-16T18:05:08.125940659Z"}
+
+            try:
+                '''
+                if (msg[0] == "NotifyWriteTag"):
+                    print(msg)
+                    # printOnSuccess(y)
+                '''
+                if (msg[0] == "NotifySubscribeTagValue"):
+                    
+                    print("---- RESPONSE ----")
+                    # Debug
+                    # print(msg[0])
+                    # print(msg[1])
+                    # print(msg[2])
+                    # print(msg[3])
+
+                    # IPv4
+                    if(msg[1] == "IPv4"):
+                        plc_address = msg[3]
+                        print("Debug set IPv4: " + plc_address)
+
+                    elif(msg[1] == "Port_Number"):
+                        modbus_port = msg[3]
+                        print("Debug set Port_Number: " + modbus_port)
+
+                    elif(msg[1] == "Unit_Id"):
+                        unit_id = msg[3]
+                        print("Debug set Unit_Id: " + unit_id)
+                    
+                    elif(msg[1] == "Enable"):
+                        modbus_enable = msg[3]
+                        print("Debug set Enable: " + modbus_enable)
+
+                    elif(msg[1] == "Device_Type"):
+                        device_type = msg[3]
+                        print("Debug set Device_Type: " + device_type)
+                    
+                elif (msg[0] == "ErrorWriteTag"):
+                    printOnError(msg)
+
+            except json.decoder.JSONDecodeError:
+                print("response is not a valid format")
 
 # Init measures
 def init():
@@ -198,6 +234,12 @@ def setValues(values):
     # 1: error
     ErrorState = error_state
 
+    # Error code
+    ErrorCode = error_state
+
+    # Error code description
+    ErrorDesc = error_code_desc
+
     # Voltage L-N (V)
     L1_N = values[0]
     L2_N = values[1]
@@ -276,12 +318,28 @@ def setValues(values):
     Polling_timestamp = datetime.now()
     
     # Prepare query for WinCC
-    writeTagCommand = '{"Message":"WriteTag","Params":{"Tags":[{"Name":"ConnectionState","Value":"' + str(ConnectionState) + '"},{"Name":"Polling_Timestamp","Value":"' + str(Polling_timestamp) + '"},{"Name":"ErrorState","Value":"' + str(ErrorState) + '"},{"Name":"L1_N","Value":"' + str(L1_N) + '"},{"Name":"L2_N","Value":"' + str(L2_N) + '"},{"Name":"L3_N","Value":"' + str(L3_N) + '"}, {"Name":"L1_L2","Value":"' + str(L1_L2) + '"},{"Name":"L2_L3","Value":"' + str(L2_L3) + '"},{"Name":"L3_L1","Value":"' + str(L3_L1) + '"},{"Name":"I1","Value":"' + str(I1) + '"},{"Name":"I2","Value":"' + str(I2) + '"},{"Name":"I3","Value":"' + str(I3) + '"},{"Name":"S_L1","Value":"' + str(S_L1) + '"},{"Name":"S_L2","Value":"' + str(S_L2) + '"},{"Name":"S_L3","Value":"' + str(S_L3) + '"},{"Name":"P_L1","Value":"' + str(P_L1) + '"},{"Name":"P_L2","Value":"' + str(P_L2) + '"},{"Name":"P_L3","Value":"' + str(P_L3) + '"},{"Name":"Q_L1","Value":"' + str(Q_L1) + '"},{"Name":"Q_L2","Value":"' + str(Q_L2) + '"},{"Name":"Q_L3","Value":"' + str(Q_L3) + '"},{"Name":"Frequency","Value":"' + str(Frequency) + '"},{"Name":"L_N_Avg","Value":"' + str(L_N_Avg) + '"},{"Name":"L_L_Avg","Value":"' + str(L_L_Avg) + '"},{"Name":"I_Avg","Value":"' + str(I_Avg) + '"},{"Name":"S_Total","Value":"' + str(S_Total) + '"},{"Name":"P_Total","Value":"' + str(P_Total) + '"},{"Name":"Q_Total","Value":"' + str(Q_Total) + '"},{"Name":"PF_L1","Value":"' + str(PF_L1) + '"},{"Name":"PF_L2","Value":"' + str(PF_L2) + '"},{"Name":"PF_L3","Value":"' + str(PF_L3) + '"},{"Name":"PF_Total","Value":"' + str(PF_Total) + '"},{"Name":"I_N","Value":"' + str(I_N) + '"},{"Name":"P_Total_Imp","Value":"' + str(P_Total_Imp) + '"},{"Name":"Q_Total_Imp","Value":"' + str(Q_Total_Imp) + '"},{"Name":"P_Total_Exp","Value":"' + str(P_Total_Exp) + '"},{"Name":"Q_Total_Exp","Value":"' + str(Q_Total_Exp) + '"}]},"ClientCookie":"CookieReadTags123"}\n'
-    print(writeTagCommand)
+    writeTagCommand = '{"Message":"WriteTag","Params":{"Tags":[{"Name":"Connection_State","Value":"' + str(ConnectionState) + '"},{"Name":"Polling_Timestamp","Value":"' + str(Polling_timestamp) + '"},{"Name":"Error","Value":"' + str(ErrorState) + '"},{"Name":"L1_N","Value":"' + str(L1_N) + '"},{"Name":"L2_N","Value":"' + str(L2_N) + '"},{"Name":"L3_N","Value":"' + str(L3_N) + '"}, {"Name":"L1_L2","Value":"' + str(L1_L2) + '"},{"Name":"L2_L3","Value":"' + str(L2_L3) + '"},{"Name":"L3_L1","Value":"' + str(L3_L1) + '"},{"Name":"I1","Value":"' + str(I1) + '"},{"Name":"I2","Value":"' + str(I2) + '"},{"Name":"I3","Value":"' + str(I3) + '"},{"Name":"S_L1","Value":"' + str(S_L1) + '"},{"Name":"S_L2","Value":"' + str(S_L2) + '"},{"Name":"S_L3","Value":"' + str(S_L3) + '"},{"Name":"P_L1","Value":"' + str(P_L1) + '"},{"Name":"P_L2","Value":"' + str(P_L2) + '"},{"Name":"P_L3","Value":"' + str(P_L3) + '"},{"Name":"Q_L1","Value":"' + str(Q_L1) + '"},{"Name":"Q_L2","Value":"' + str(Q_L2) + '"},{"Name":"Q_L3","Value":"' + str(Q_L3) + '"},{"Name":"Frequency","Value":"' + str(Frequency) + '"},{"Name":"LN_Avg","Value":"' + str(L_N_Avg) + '"},{"Name":"LL_Avg","Value":"' + str(L_L_Avg) + '"},{"Name":"I_Avg","Value":"' + str(I_Avg) + '"},{"Name":"S_Total","Value":"' + str(S_Total) + '"},{"Name":"P_Total","Value":"' + str(P_Total) + '"},{"Name":"Q_Total","Value":"' + str(Q_Total) + '"},{"Name":"PF_L1","Value":"' + str(PF_L1) + '"},{"Name":"PF_L2","Value":"' + str(PF_L2) + '"},{"Name":"PF_L3","Value":"' + str(PF_L3) + '"},{"Name":"PF_Tot","Value":"' + str(PF_Total) + '"},{"Name":"I_N","Value":"' + str(I_N) + '"},{"Name":"P_Total_Imp","Value":"' + str(P_Total_Imp) + '"},{"Name":"Q_Total_Imp","Value":"' + str(Q_Total_Imp) + '"},{"Name":"P_Total_Exp","Value":"' + str(P_Total_Exp) + '"},{"Name":"Q_Total_Exp","Value":"' + str(Q_Total_Exp) + '"},{"Name":"Error_Code","Value":"' + str(ErrorCode) + '"},{"Name":"Error_Code_Desc","Value":"' + str(ErrorDesc) + '"}]},"ClientCookie":"CookieReadTags123"}\n'
+    # print(writeTagCommand)
+
+    # print("Write enable: " + str(pipe_write))
+
+    # Enable write on pipe
+    if (pipe_write == 1):
+       # Send data to WinCC
+       pipe_socket.sendall(writeTagCommand.encode()) 
+       # print("Sended measures to wincc")  
     
-    # Send data to WinCC
-    pipe_socket.sendall(writeTagCommand.encode()) 
-    print("Sended measures")      
+    # Disable write on pipe
+    if(pipe_write == 0):
+       # Read tag from WinCC at first application run
+       readTagCommand = '{"Message":"ReadTag","Params":{"Tags":["Device_Type","Enable","IPv4","Port_Number","Unit_Id"]},"ClientCookie":"myRequest1"}\n'
+       pipe_socket.sendall(readTagCommand.encode())    
+       # print("Read measures from WinCC")
+    
+
+    # Wait socket response from WinCC ---- > The best solution was two separated pipe from Siemens 
+    # time.sleep(2)
+
     
     
 # Init variables
@@ -308,7 +366,8 @@ modbus_enable
 # Device type
 device_type
 
-
+# Write enable on pipe
+pipe_write = 0
         
 # Values array - Device registers - Create device class 
 values = np.zeros(100)
@@ -335,7 +394,9 @@ except  Exception as e:
     connection_state = 0
 '''    
 
-length = 1024
+# length = 1024
+# length = 2048
+length = 4096
 
 # Unix path
 file_name = '/temp/HmiRuntime'
@@ -352,51 +413,102 @@ pipe_socket.setblocking(0)
 print(sys.stderr, 'Connecting to %s' % file_name)
 
 # Socket connection 
-try:
-    pipe_socket.connect(file_name)
-    print(sys.stderr, 'Connected to %s' % file_name)
-except socket.error as msg:
-    print(sys.stderr, msg)
+socket_connected = False
+
+while(socket_connected != True):
+   try:
+       pipe_socket.connect(file_name)
+       print(sys.stderr, 'Connected to %s' % file_name)
+       socket_connected = True
+   except socket.error as msg:
+       print(sys.stderr, msg)
+       socket_connected = False
 
 
-# Read tag from WinCC
+# Read tag from WinCC at first application run
 readTagCommand = '{"Message":"ReadTag","Params":{"Tags":["Device_Type","Enable","IPv4","Port_Number","Unit_Id"]},"ClientCookie":"myRequest1"}\n'
 pipe_socket.sendall(readTagCommand.encode())
 
+'''
+# Subscribe HMI Tag Value - The name of the subscribed tag is : Device_Type
+message_1 = 'SubscribeTagValue Device_Type \n'
+print(sys.stderr, 'sending "%s"' % message_1)
+pipe_socket.sendall(message_1.encode()) # Encode the message and send through socket
+
+# Subscribe HMI Tag Value - The name of the subscribed tag is : Enable
+message_2 = 'SubscribeTagValue Enable \n'
+print(sys.stderr, 'sending "%s"' % message_2)
+pipe_socket.sendall(message_2.encode()) # Encode the message and send through socket
+
+# Subscribe HMI Tag Value - The name of the subscribed tag is : IPv4
+message_3 = 'SubscribeTagValue IPv4 \n'
+print(sys.stderr, 'sending "%s"' % message_3)
+pipe_socket.sendall(message_3.encode()) # Encode the message and send through socket
+
+# Subscribe HMI Tag Value - The name of the subscribed tag is : Port_Number
+message_4 = 'SubscribeTagValue Port_Number \n'
+print(sys.stderr, 'sending "%s"' % message_4)
+pipe_socket.sendall(message_4.encode()) # Encode the message and send through socket
+
+# Subscribe HMI Tag Value - The name of the subscribed tag is : Unit_Id
+message_5 = 'SubscribeTagValue Unit_Id \n'
+print(sys.stderr, 'sending "%s"' % message_5)
+pipe_socket.sendall(message_5.encode()) # Encode the message and send through socket
+'''
 
 #Read register - Set interval from HMI
 while True:
       while True:
+    
         # Start reading time
         startime = time.time()
 
-        print("------------------------------------")
+        # print("------------------------------------")
         timestamp = datetime.now()   
-        print("Timestamp: ", timestamp)
-        if(connection_state == 1):
-            print("Connection state: ONLINE")
-        elif(connection_state == 0):
-            print("Connection state: OFFLINE")
-        
-        
+        # print("Timestamp: ", timestamp)
+        # if(connection_state == 1):
+            # print("Connection state: ONLINE")
+        # elif(connection_state == 0):
+            # print("Connection state: OFFLINE")
+
         # Check if there are data on socket
         try:
-            print("Receive data")
-            read_value = pipe_socket.recv(length)
-            print("Received data")
-            reads = read_value.decode()
-            callbackFunction(reads)
+            # print("Receive data")
+            read_value = ""
+
+            if(pipe_write == 0):
+                find_read = False
+
+                while(find_read != True ):
+
+                   read_value = pipe_socket.recv(length)
+                   # print("Received data " + read_value.decode())
+                   reads = read_value.decode()
+                   if(reads.find("NotifyReadTag") != -1):
+                       find_read = True
+
+                callbackFunction(reads)   
+            
+            elif(pipe_write == 1):
+                # Receive NotifyWriteTag, wait termination value ? 
+                read_value = pipe_socket.recv(length)
+                # print("Received data " + read_value.decode())
+                reads = read_value.decode()
+                callbackFunction(reads)
+
+
         except BlockingIOError:
             print('no data')
 
-        print("Enable: " + modbus_enable)
-        print("IPv4: " + plc_address)
-        print("Port :" + modbus_port)
-        print("ID: " + str(unit_id))
-        print("Device type: " + str(device_type))
+    
+        # print("Enable: " + modbus_enable)
+        # print("IPv4: " + plc_address)
+        # print("Port :" + modbus_port)
+        # print("ID: " + str(unit_id))
+        # print("Device type: " + str(device_type))
 
         if(modbus_enable == "TRUE"):
-            print("Polling enabled")
+            # print("Polling enabled")
             # If connection is open run modbus reading registers
             if(connection_state == 1):
         
@@ -453,17 +565,21 @@ while True:
                         error_code_desc = e.args[0]
                         connection_state = 0
                 
-        
+                # Enable write on pipe
+                if(pipe_write == 0):
+                   pipe_write = 1
+                elif(pipe_write == 1):
+                   pipe_write = 0
+                
                 # Write on WinCC 
                 setValues(values)
                 
-        
                 # End time
                 endtime = time.time()
-                print("Execution time: %s seconds " % (endtime - startime))
-                print("Error code: ", error_code, " description: ", error_code_desc)
+                # print("Execution time: %s seconds " % (endtime - startime))
+                # print("Error code: ", error_code, " description: ", error_code_desc)
+
                 time.sleep(polling_time)
-        
         
                 # Else if connection is close store zeros into dabatabase
             elif(connection_state == 0):
@@ -479,9 +595,9 @@ while True:
 
                     # End time
                     endtime = time.time()
-                    print("Execution time: %s seconds " % (endtime - startime))
+                    # print("Execution time: %s seconds " % (endtime - startime))
                     #  print("Error: ", error_code)
-                    print("Error code: ", error_code, " description: ", error_code_desc)
+                    # print("Error code: ", error_code, " description: ", error_code_desc)
                     # Modbus client
                     client = ModbusClient(plc_address, modbus_port)
                     connection_state = client.connect()
@@ -500,12 +616,19 @@ while True:
                     time.sleep(polling_time)
         
         elif(modbus_enable == "FALSE"):
-                print("Polling disabled")
+                # print("Polling disabled")
                 connection_state = 0
                 error_state = 0
                 values = np.zeros(100)
                 # End time
                 endtime = time.time()
-                print("Execution time: %s seconds " % (endtime - startime))
-                print("Error code: ", error_code, " description: ", error_code_desc)
+
+                pipe_write = 0
+
+                # Read tag from WinCC at first application run
+                readTagCommand = '{"Message":"ReadTag","Params":{"Tags":["Device_Type","Enable","IPv4","Port_Number","Unit_Id"]},"ClientCookie":"myRequest1"}\n'
+                pipe_socket.sendall(readTagCommand.encode())
+
+                # print("Execution time: %s seconds " % (endtime - startime))
+                # print("Error code: ", error_code, " description: ", error_code_desc)
                 time.sleep(polling_time)
