@@ -117,10 +117,11 @@ In order for the application to work, the following steps must be followed:
 - Connect variables for energy measures visualization
 
 You can start using it without configuration with default parameters:
-- IPv4: 192.168.100.9
-- Modbus port: 502
+- IPv4 address: 192.168.100.1
+- Port: 502
 - Unit ID: 1
-- Enable: True
+- Enable: False
+- Device type: 0
 
 ![sentron-config](docs/sentron_edge_settings.png)
 
