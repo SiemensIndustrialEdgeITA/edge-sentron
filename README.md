@@ -122,7 +122,7 @@ You can start using it without configuration with default parameters:
 - Unit ID: 1
 - Enable: True
 
-![sentron-config](EdgeSentronSettings.png)
+![sentron-config](docs/sentron_edge_settings.png)
 
 
 ## Release History
