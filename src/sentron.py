@@ -40,16 +40,18 @@ def callbackFunction(response):
     # Callback comes here from Runtime
     # do JSON loading in a try block to avoid invalid JSON processing.
 
-    print("------------ Callback READ ------------")
+    # print("------------ Callback READ ------------")
+    
     # NotifySubscribeTagValue IPv4 Good 192.168.100.5\n  ----- Response example
-    print("Response " + response)
+    
+    # print("Response " + response)
 
     global plc_address, modbus_port , unit_id, device_type, modbus_enable
 
     # If find "NotifyReadTag" in response is the first WinCC variables read
     if (response.find("NotifyReadTag") != -1):
           # Split response
-          print("--- NotifyReadTag ---")
+          # print("--- NotifyReadTag ---")
           s = response.split("\n",1)
           try:
               # Parse response
@@ -94,7 +96,7 @@ def callbackFunction(response):
                 '''
                 if (msg[0] == "NotifySubscribeTagValue"):
                     
-                    print("---- RESPONSE ----")
+                    # print("---- RESPONSE ----")
                     # Debug
                     # print(msg[0])
                     # print(msg[1])
@@ -104,23 +106,23 @@ def callbackFunction(response):
                     # IPv4
                     if(msg[1] == "IPv4"):
                         plc_address = msg[3]
-                        print("Debug set IPv4: " + plc_address)
+                        # print("Debug set IPv4: " + plc_address)
 
                     elif(msg[1] == "Port_Number"):
                         modbus_port = msg[3]
-                        print("Debug set Port_Number: " + modbus_port)
+                        # print("Debug set Port_Number: " + modbus_port)
 
                     elif(msg[1] == "Unit_Id"):
                         unit_id = msg[3]
-                        print("Debug set Unit_Id: " + unit_id)
+                        # print("Debug set Unit_Id: " + unit_id)
                     
                     elif(msg[1] == "Enable"):
                         modbus_enable = msg[3]
-                        print("Debug set Enable: " + modbus_enable)
+                        # print("Debug set Enable: " + modbus_enable)
 
                     elif(msg[1] == "Device_Type"):
                         device_type = msg[3]
-                        print("Debug set Device_Type: " + device_type)
+                        # print("Debug set Device_Type: " + device_type)
                     
                 elif (msg[0] == "ErrorWriteTag"):
                     printOnError(msg)
@@ -128,9 +130,8 @@ def callbackFunction(response):
             except json.decoder.JSONDecodeError:
                 print("response is not a valid format")
 
-# Init measures
-def init():
 
+def init_modbus():
     global plc_address 
     global modbus_port
     global unit_id
@@ -146,6 +147,10 @@ def init():
 
     ConnectionState = 0
     ErrorState = 0
+
+
+# Init measures PAC2200
+def init_pac2000():
 
     # Voltage L-N (V)
     L1_N = 0
@@ -222,7 +227,7 @@ def init():
     Q_Total_Exp = 0
 
 # Set WinCC Unified values
-def setValues(values):
+def setValues_pac2200(values):
 
     # Connection state 
     # 0: disconnect 
@@ -313,9 +318,9 @@ def setValues(values):
 
     # Total reactive energy exported - current period (varh)
     Q_Total_Exp = values[53]
-    
+
     # Last polling timestamp
-    Polling_timestamp = datetime.now()
+    Polling_timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     
     # Prepare query for WinCC
     writeTagCommand = '{"Message":"WriteTag","Params":{"Tags":[{"Name":"Connection_State","Value":"' + str(ConnectionState) + '"},{"Name":"Polling_Timestamp","Value":"' + str(Polling_timestamp) + '"},{"Name":"Error","Value":"' + str(ErrorState) + '"},{"Name":"L1_N","Value":"' + str(L1_N) + '"},{"Name":"L2_N","Value":"' + str(L2_N) + '"},{"Name":"L3_N","Value":"' + str(L3_N) + '"}, {"Name":"L1_L2","Value":"' + str(L1_L2) + '"},{"Name":"L2_L3","Value":"' + str(L2_L3) + '"},{"Name":"L3_L1","Value":"' + str(L3_L1) + '"},{"Name":"I1","Value":"' + str(I1) + '"},{"Name":"I2","Value":"' + str(I2) + '"},{"Name":"I3","Value":"' + str(I3) + '"},{"Name":"S_L1","Value":"' + str(S_L1) + '"},{"Name":"S_L2","Value":"' + str(S_L2) + '"},{"Name":"S_L3","Value":"' + str(S_L3) + '"},{"Name":"P_L1","Value":"' + str(P_L1) + '"},{"Name":"P_L2","Value":"' + str(P_L2) + '"},{"Name":"P_L3","Value":"' + str(P_L3) + '"},{"Name":"Q_L1","Value":"' + str(Q_L1) + '"},{"Name":"Q_L2","Value":"' + str(Q_L2) + '"},{"Name":"Q_L3","Value":"' + str(Q_L3) + '"},{"Name":"Frequency","Value":"' + str(Frequency) + '"},{"Name":"LN_Avg","Value":"' + str(L_N_Avg) + '"},{"Name":"LL_Avg","Value":"' + str(L_L_Avg) + '"},{"Name":"I_Avg","Value":"' + str(I_Avg) + '"},{"Name":"S_Total","Value":"' + str(S_Total) + '"},{"Name":"P_Total","Value":"' + str(P_Total) + '"},{"Name":"Q_Total","Value":"' + str(Q_Total) + '"},{"Name":"PF_L1","Value":"' + str(PF_L1) + '"},{"Name":"PF_L2","Value":"' + str(PF_L2) + '"},{"Name":"PF_L3","Value":"' + str(PF_L3) + '"},{"Name":"PF_Tot","Value":"' + str(PF_Total) + '"},{"Name":"I_N","Value":"' + str(I_N) + '"},{"Name":"P_Total_Imp","Value":"' + str(P_Total_Imp) + '"},{"Name":"Q_Total_Imp","Value":"' + str(Q_Total_Imp) + '"},{"Name":"P_Total_Exp","Value":"' + str(P_Total_Exp) + '"},{"Name":"Q_Total_Exp","Value":"' + str(Q_Total_Exp) + '"},{"Name":"Error_Code","Value":"' + str(ErrorCode) + '"},{"Name":"Error_Code_Desc","Value":"' + str(ErrorDesc) + '"}]},"ClientCookie":"CookieReadTags123"}\n'
@@ -337,14 +342,12 @@ def setValues(values):
        # print("Read measures from WinCC")
     
 
-    # Wait socket response from WinCC ---- > The best solution was two separated pipe from Siemens 
-    # time.sleep(2)
 
+# Init modbus communication
+init_modbus()    
     
-    
-# Init variables
-init()
-
+# Init variables PAC2200
+init_pac2000()
 
 # Polling time (s)
 polling_time = 5
@@ -458,8 +461,18 @@ pipe_socket.sendall(message_5.encode()) # Encode the message and send through so
 
 #Read register - Set interval from HMI
 while True:
-      while True:
+
+    # PAC1200
+    if(device_type == 0):
+        print("PAC1200 --- ToDo")
     
+    # PAC1600
+    if(device_type == 1):
+        print("PAC1600 --- ToDo")
+
+    # PAC2200
+    if(device_type == 2):
+        
         # Start reading time
         startime = time.time()
 
@@ -572,7 +585,7 @@ while True:
                    pipe_write = 0
                 
                 # Write on WinCC 
-                setValues(values)
+                setValues_pac2200(values)
                 
                 # End time
                 endtime = time.time()
@@ -587,7 +600,7 @@ while True:
                     values = np.zeros(100)
                     
                     # Write zeros on WinCC 
-                    setValues(values)
+                    setValues_pac2200(values)
             
                     # Send data to WinCC
                     # runtime.SendExpertCommand(writeTagCommand)
@@ -632,3 +645,44 @@ while True:
                 # print("Execution time: %s seconds " % (endtime - startime))
                 # print("Error code: ", error_code, " description: ", error_code_desc)
                 time.sleep(polling_time)
+    
+    # PAC3100
+    if(device_type == 3):
+        print("PAC3100 --- ToDo")
+    
+    # PAC3120
+    if(device_type == 4):
+        print("PAC3120 --- ToDo")
+    
+    # PAC3220
+    if(device_type == 5):
+        print("PAC3220 --- ToDo")
+    
+    # PAC3220T
+    if(device_type == 6):
+        print("PAC3220T --- ToDo")
+    
+    # PAC4200
+    if(device_type == 7):
+        print("PAC4200 --- ToDo")
+    
+    # PAC5200
+    if(device_type == 8):
+        print("PAC5200 --- ToDo")
+    
+    # SEM3
+    if(device_type == 9):
+        print("SEM3 --- ToDo")
+    
+    # ATC6300
+    if(device_type == 10):
+        print("ATC6300 --- ToDo")
+    
+    # 3VA
+    if(device_type == 11):
+        print("3VA --- ToDo")
+    
+    # Powercenter 10000
+    if(device_type == 11):
+        print("Powercenter 10000 --- ToDo")
+    
